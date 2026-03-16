@@ -58,7 +58,7 @@ jobs:
       - name: Validate environment variables
         run: |
             python - <<EOF
-            from core.config import get_settings
+            from backend.core.config import get_settings
             get_settings()
             print("Environment variables validated successfully.")
             EOF

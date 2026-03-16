@@ -1,0 +1,20 @@
+Name                                 Stmts   Miss  Cover
+--------------------------------------------------------
+backend\__init__.py                      0      0   100%
+backend\core\api_info.py                11      0   100%
+backend\core\config.py                  10      0   100%
+backend\core\security.py                19      2    89%
+backend\main.py                         16      1    94%
+backend\middleware\rate_limiter.py       3      0   100%
+backend\routers\auth.py                 12      0   100%
+backend\routers\email_analizer.py        9      0   100%
+backend\routers\health.py               11      0   100%
+backend\routers\info.py                 10      0   100%
+backend\schemas\auth.py                  7      0   100%
+backend\schemas\email_analizer.py        6      0   100%
+backend\schemas\health.py                6      0   100%
+backend\schemas\info.py                  5      0   100%
+backend\services\dependencies.py         4      0   100%
+backend\services\security.py            37      1    97%
+--------------------------------------------------------
+TOTAL                                  166      4    98%

@@ -1,0 +1,51 @@
+# GITHUB
+# Settings > Branches > Add branch protection rule
+# Branch name pattern == main
+# Require a pull request before merging == active > Require approvals == 1
+# Require status checks to pass before merging == active >
+#   - Require branches to be up to date before merging == active
+#   - Status checks that are required == [lint, test, sonar]
+# Require conversation resolution before merging == active
+# Create
+
+version: 2
+
+updates:
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "sunday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 1
+    labels:
+      - "dependencies"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "sunday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "sunday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"

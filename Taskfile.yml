@@ -1,0 +1,122 @@
+version: '3'
+silent: true
+
+tasks:
+  # -------------------------
+  # VALIDATION 
+  # -------------------------
+  validate-env:
+    desc: Validate that all variables in .env exist in .env.example
+    cmds:
+      - |
+        powershell -Command "
+          Write-Host '🔍 Validating .env variables...' -ForegroundColor Green
+
+          if (!(Test-Path '.env')) { Write-Host '❌ .env not found' -ForegroundColor Red; exit 1 }
+          if (!(Test-Path '.env.example')) { Write-Host '❌ .env.example not found' -ForegroundColor Red; exit 1 }
+
+          # 🔒 Hardcoded ignored variables
+          \$ignoreList = @(
+            'TEMP_EMAIL','SONAR_PROJECT_KEY','SONAR_ORGANIZATION','SONAR_TOKEN_NAME','SONAR_TOKEN'
+          )
+
+          # 📄 Extract variable names
+          \$envVars = Get-Content '.env' |
+            Where-Object { \$_ -match '^[^#=]+=' } |
+            ForEach-Object { (\$_ -split '=')[0].Trim() }
+
+          \$exampleVars = Get-Content '.env.example' |
+            Where-Object { \$_ -match '^[^#=]+=' } |
+            ForEach-Object { (\$_ -split '=')[0].Trim() }
+
+          # 🔎 Compare
+          \$missing = \$envVars |
+            Where-Object { \$_ -notin \$exampleVars -and \$_ -notin \$ignoreList }
+
+          if (\$missing.Count -gt 0) {
+            Write-Host '❌ Variables missing in .env.example:' -ForegroundColor Red
+            \$missing | ForEach-Object { Write-Host \"   - \$_\" -ForegroundColor Red }
+            exit 1
+          }
+
+          Write-Host '✅ .env validation passed!' -ForegroundColor Green
+        "
+  # -------------------------
+  # RUFF 
+  # -------------------------
+  sort:
+    desc: Clean and standardize the order of imports with ruff => task sort
+    cmds:
+      - powershell -Command Write-Host "🔥 Checking and ordering ..." -ForegroundColor Green
+      - ruff check --select I --fix
+      - powershell -Command Write-Host "✅ Ruff analysis completed." -ForegroundColor Green
+
+  # -------------------------
+  # PIP 
+  # -------------------------
+  install:
+    desc: Add a library to my .venv file and add it to my requirements.txt file along with its version => task install -- library
+    vars:
+      PACKAGE: '{{.CLI_ARGS}}'
+    cmds:
+      - powershell -Command Write-Host "➕ Installing the {{.PACKAGE}} library in .venv/ ..." -ForegroundColor Green
+      - pip install {{.PACKAGE}}
+      - powershell -Command "(pip freeze | Select-String '^{{.PACKAGE}}==').Line -replace '^{{.PACKAGE}}==','{{.PACKAGE}}~=' | Out-File -Append -Encoding utf8 requirements.txt"
+      - powershell -Command Write-Host "✅ {{.PACKAGE}} installed in .venv/ and added to requirements.txt" -ForegroundColor Green
+  
+  # -------------------------
+  # TRIVY 
+  # task scan-image -- postgres:14
+  # -------------------------
+  scan-image:
+    desc: Scan any Docker image with Trivy => task scan-image -- IMAGE:TAG
+    vars:
+      IMAGE: '{{.CLI_ARGS}}'
+    cmds:
+      - powershell -Command "Write-Host '🔍 Scanning {{.IMAGE}} with Trivy and 🧹 delete file trivy_info.txt if exists...' -ForegroundColor Green"
+      - powershell -Command "if (Test-Path security_reports/trivy_info.txt) { Remove-Item security_reports/trivy_info.txt -Force }"
+      - trivy image --severity CRITICAL --scanners vuln --ignore-unfixed --exit-code 1 --format table --no-progress {{.IMAGE}} > security_reports/trivy_info.txt
+      - powershell -Command "Write-Host '✅ Scan completed. Results saved in security_reports/trivy_info.txt' -ForegroundColor Green"
+
+  # -------------------------
+  # BANDIT 
+  # -------------------------
+  bandit:
+    desc: Detect unsafe Python code => task bandit
+    cmds:
+      - powershell -Command "Write-Host '👀 Detecting unsafe Python code...' -ForegroundColor Green"
+      - powershell -Command "if (Test-Path  security_reports/bandit_info.txt) { Remove-Item  security_reports/bandit_info.txt -Force }"
+      - bandit -r . -lll -x tests,mocks,venv,migrations > security_reports/bandit_info.txt
+      - powershell -Command "Write-Host '✅ Scan completed. Results saved in security_reports/bandit_info.txt' -ForegroundColor Green"
+
+  # -------------------------
+  # COVERAGE 
+  # -------------------------
+  cover:
+    desc: Run tests with coverage (requires 90% minimum) => task cover
+    vars:
+      MIN_COVERAGE: '90'
+    cmds:
+      - powershell -Command "Write-Host '🧪 Running tests with coverage analysis ...' -ForegroundColor Cyan"
+      - powershell -Command "if (Test-Path 'security_reports/coverage_info.txt') { Remove-Item 'security_reports/coverage_info.txt' -Force }"
+      - coverage run --omit='tests/*,mocks/*' -m pytest
+      - powershell -Command "Write-Host '📊 Coverage Report:' -ForegroundColor Yellow"
+      - coverage report --fail-under={{.MIN_COVERAGE}} > security_reports/coverage_info.txt
+      - powershell -Command "Write-Host '✅ All tests passed. Results saved in security_reports/coverage_info.txt' -ForegroundColor Green"
+
+  # -------------------------
+  # DOCKER 
+  # -------------------------
+  up:
+    desc: docker-compose up -d => task up
+    cmds:
+      - powershell -Command "Write-Host '🐳 Raising docker ...' -ForegroundColor Green"
+      - docker-compose up -d
+      - powershell -Command "Write-Host '✅ Docker compose up.' -ForegroundColor Green"
+  
+  down:
+    desc: docker-compose down -v => task up
+    cmds:
+      - powershell -Command "Write-Host '🐳 Turning off docker ...' -ForegroundColor Green"
+      - docker-compose down -v
+      - powershell -Command "Write-Host '✅ Docker compose down.' -ForegroundColor Green"

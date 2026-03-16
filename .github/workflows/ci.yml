@@ -55,6 +55,10 @@ jobs:
           grep -v '^#' .env > .env.tmp
           mv .env.tmp .env
 
+      - name: Overwrite JWT token for CI test
+        run: |
+          echo "SEC_JWT_SECRET=xOKtZIJXWVXuBF8seC1ITGM2yzcF1moMt72SYDAxr_8" >> $GITHUB_ENV
+
       - name: Validate environment variables
         run: |
             python - <<EOF

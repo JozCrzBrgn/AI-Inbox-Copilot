@@ -6,3 +6,4 @@ python-jose[cryptography]~=3.5.0
 slowapi~=0.1.9
 passlib[argon2]~=1.7.4
 python-multipart~=0.0.22
+pydantic-settings~=2.13.1

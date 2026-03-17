@@ -2,8 +2,13 @@ from pydantic import BaseModel
 
 
 class EmailAnalizerResquest(BaseModel):
-    message: str
+    email_content: str
 
 class EmailAnalizerResponse(BaseModel):
-    success: bool
-    message: str
+    customer_name: str
+    intent: str
+    summary: str
+    priority: str
+    sentiment: str
+    suggested_subject: str
+    suggested_reply: str

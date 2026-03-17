@@ -6,6 +6,7 @@ from ..middleware.rate_limiter import limiter
 from ..mock.mock_email_analizer import analyze_email
 from ..schemas.email_analizer import EmailAnalizerResponse, EmailAnalizerResquest
 from ..services.dependencies import get_current_user
+from ..services.slack import send_slack_alert
 
 router = APIRouter()
 
@@ -60,20 +61,7 @@ async def analyze_email_endpoint(
 
     # Send alert to Slack if it's high priority
     if result["priority"].lower() == "high":
-        slack_message = f"""
-        🚨 *High Priority Customer Email*
-        *Customer:* {result['customer_name']}
-        *Intent:* {result['intent']}
-        *Sentiment:* {result['sentiment']}
-
-        *Summary:*
-        {result['summary']}
-
-        *Suggested reply:*
-        {result['suggested_reply']}
-        """
-        print(slack_message)
-        #TODO: send_slack_alert(slack_message)
+        send_slack_alert(result)
     
     # Build response with metadata
     return result

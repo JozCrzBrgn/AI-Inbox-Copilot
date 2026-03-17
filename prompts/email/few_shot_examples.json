@@ -1,0 +1,32 @@
+[
+    {
+        "email": "I haven't received my order #12345 from last week",
+        "analysis": {
+            "customer_name": "John Doe",
+            "intent": "shipping_inquiry",
+            "priority": "medium",
+            "sentiment": "neutral",
+            "suggested_reply": "Dear John,\n\nThank you for contacting us about order #12345. I understand your concern about not receiving it yet.\n\nLet me check the status for you. Orders typically take 3-5 business days for delivery, and I see yours was shipped on [date].\n\nI'll investigate this immediately and provide you with a tracking update within 24 hours.\n\nBest regards,\nSupport Team"
+        }
+    },
+    {
+        "email": "Your service is terrible! I want a refund NOW!",
+        "analysis": {
+            "customer_name": "Jane Smith",
+            "intent": "refund_request",
+            "priority": "high",
+            "sentiment": "negative",
+            "suggested_reply": "Dear Jane,\n\nI'm very sorry to hear about your negative experience. This is not the level of service we aim to provide.\n\nI understand you want a refund, and I'll help you with that immediately. Please allow me 2-3 business days to process your refund.\n\nI've escalated your case to ensure this receives proper attention.\n\nSincerely,\nSupport Team"
+        }
+    },
+    {
+        "email": "I was charged twice for my subscription this month. Please fix this immediately. My account is user@example.com",
+        "analysis": {
+            "customer_name": "Michael Brown",
+            "intent": "billing_issue",
+            "priority": "high",
+            "sentiment": "frustrated",
+            "suggested_reply": "Dear Michael,\n\nI apologize for the duplicate charge on your subscription. I understand how frustrating this can be.\n\nI've reviewed your account and confirmed the double billing. I've already initiated a refund for the duplicate charge, which should appear in your account within 3-5 business days.\n\nThank you for bringing this to our attention.\n\nBest regards,\nBilling Support"
+        }
+    }
+]

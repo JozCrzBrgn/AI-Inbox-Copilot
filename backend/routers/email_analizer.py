@@ -5,6 +5,7 @@ from ..middleware.rate_limiter import limiter
 #TODO: from ..services.email_analizer import analyze_email
 from ..mock.mock_email_analizer import analyze_email
 from ..schemas.email_analizer import EmailAnalizerResponse, EmailAnalizerResquest
+from ..services.database import save_email
 from ..services.dependencies import get_current_user
 from ..services.slack import send_slack_alert
 
@@ -57,7 +58,14 @@ async def analyze_email_endpoint(
     result = analyze_email(email_content=payload.email_content, use_examples=True)
 
     # Save in PostgreSQL
-    #TODO: ...
+    save_email(
+        customer_name=result["customer_name"],
+        intent=result["intent"],
+        priority=result["priority"],
+        sentiment=result["sentiment"],
+        summary=result["summary"],
+        reply=result["suggested_reply"]
+    )
 
     # Send alert to Slack if it's high priority
     if result["priority"].lower() == "high":

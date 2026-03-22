@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Request
 
 #TODO: from ..services.email_analizer import analyze_email
@@ -23,8 +25,8 @@ router = APIRouter()
 async def analyze_email_endpoint(
     request: Request,
     payload: EmailAnalizerResquest,
-    username: str = Depends(get_current_user),
-) -> EmailAnalizerResponse:
+    username: Annotated[str, Depends(get_current_user)],
+):
     """
     Analyze a customer support email using AI.
 

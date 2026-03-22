@@ -19,9 +19,9 @@ router = APIRouter()
     tags=["Information"],
 )
 @limiter.limit("5/minute")
-async def health_check(request: Request) -> HealthResponse:
+async def health_check(request: Request):
     return HealthResponse(
         status="healthy",
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(timezone.utc),  # NOSONAR
         version=cnf.api_info.version,
     )

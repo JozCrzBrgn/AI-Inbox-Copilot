@@ -1,5 +1,7 @@
+from unittest.mock import MagicMock
+
 import pytest
-from fastapi import Depends
+from fastapi import Depends, Request
 
 from backend.main import app
 from backend.services.dependencies import get_current_user
@@ -13,12 +15,16 @@ def client():
 
 def test_get_current_user_returns_username():
     """Returns the username correctly"""
+    # Create a mock request
+    mock_request = MagicMock(spec=Request)
+    mock_request.state = MagicMock()
+    
     # Simulate that decode_access_token returns a username
     expected_username = "testuser"
     
     # Call the function with the simulated username
     # Note: Since it has Depends, we can call it directly in testing.
-    result = get_current_user(username=expected_username)
+    result = get_current_user(request=mock_request, username=expected_username)
     
     assert result == expected_username
     assert isinstance(result, str)
@@ -104,16 +110,24 @@ def test_get_current_user_invalid_token(client):
 ])
 def test_get_current_user_parametrized(username, expected):
     """Parameterized test with different usernames"""
-    result = get_current_user(username=username)
+    # Create a mock request
+    mock_request = MagicMock(spec=Request)
+    mock_request.state = MagicMock()
+
+    result = get_current_user(request=mock_request, username=username)
     assert result == expected
 
 
 def test_get_current_user_return_type():
     """Verify that it always returns a string"""
-    result = get_current_user(username="testuser")
+    # Create a mock request
+    mock_request = MagicMock(spec=Request)
+    mock_request.state = MagicMock()
+
+    result = get_current_user(request=mock_request, username="testuser")
     assert isinstance(result, str)
     
-    result = get_current_user(username="")
+    result = get_current_user(request=mock_request, username="")
     assert isinstance(result, str)
 
 

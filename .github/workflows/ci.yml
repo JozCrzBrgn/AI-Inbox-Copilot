@@ -15,9 +15,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.12
           cache: pip
@@ -36,10 +36,25 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v6
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ${{ vars.PG_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          POSTGRES_DB: ${{ vars.PG_DBNAME }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ${{ vars.PG_USER }}"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
-      - uses: actions/setup-python@v6
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.12
           cache: pip
@@ -54,6 +69,14 @@ jobs:
           cp .env.example .env
           grep -v '^#' .env > .env.tmp
           mv .env.tmp .env
+
+      - name: Overwrite postgres credentials for CI
+        run: |
+          echo "PG_HOST=localhost" >> $GITHUB_ENV
+          echo "PG_PORT=5432" >> $GITHUB_ENV
+          echo "PG_DBNAME=${{ vars.PG_DBNAME }}" >> $GITHUB_ENV
+          echo "PG_USER=${{ vars.PG_USER }}" >> $GITHUB_ENV
+          echo "PG_PASSWORD=${{ secrets.PG_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Overwrite JWT token for CI test
         run: |
@@ -89,7 +112,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 

@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Export .env.example variables
         run: |
@@ -40,6 +40,18 @@ jobs:
           scanners: vuln,secret,misconfig
           hide-progress: true
 
+      # Scan image Postgres
+      - name: Scan Postgres image
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: postgres:16
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          severity: CRITICAL
+          scanners: vuln
+          hide-progress: true
+
 
   # =========================
   # 2️⃣ BANDIT (Unsafe code)
@@ -49,10 +61,10 @@ jobs:
     needs: trivy
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Install Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 

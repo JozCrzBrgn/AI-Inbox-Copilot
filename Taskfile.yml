@@ -4,6 +4,7 @@ silent: true
 tasks:
   # -------------------------
   # VALIDATION 
+  # uvicorn backend.main:app --reload
   # -------------------------
   validate-env:
     desc: Validate that all variables in .env exist in .env.example
@@ -66,7 +67,7 @@ tasks:
   
   # -------------------------
   # TRIVY 
-  # task scan-image -- postgres:14
+  # task scan-image -- postgres:16
   # -------------------------
   scan-image:
     desc: Scan any Docker image with Trivy => task scan-image -- IMAGE:TAG
@@ -86,7 +87,7 @@ tasks:
     cmds:
       - powershell -Command "Write-Host '👀 Detecting unsafe Python code...' -ForegroundColor Green"
       - powershell -Command "if (Test-Path  security_reports/bandit_info.txt) { Remove-Item  security_reports/bandit_info.txt -Force }"
-      - bandit -r . -lll -x tests,mocks,venv,migrations > security_reports/bandit_info.txt
+      - bandit -r backend/ -ll -x tests,mocks,migrations,.venv > security_reports/bandit_info.txt
       - powershell -Command "Write-Host '✅ Scan completed. Results saved in security_reports/bandit_info.txt' -ForegroundColor Green"
 
   # -------------------------

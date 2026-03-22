@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Request
 
@@ -22,6 +22,6 @@ router = APIRouter()
 async def health_check(request: Request) -> HealthResponse:
     return HealthResponse(
         status="healthy",
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         version=cnf.api_info.version,
     )

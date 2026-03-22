@@ -16,7 +16,7 @@ router = APIRouter()
     tags=["Information"],
 )
 @limiter.limit("5/minute")
-async def root(request: Request) -> InfoResponse:
+async def root(request: Request):
     return InfoResponse(
         created_by=cnf.api_info.contact_name,
         description=cnf.api_info.description,

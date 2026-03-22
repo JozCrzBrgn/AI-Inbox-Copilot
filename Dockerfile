@@ -19,9 +19,7 @@ WORKDIR /app
 
 RUN useradd -m appuser
 
-COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
-
-RUN chmod -R a-w /home/appuser/.local
+COPY --from=builder --chown=appuser:appuser --chmod=555 /root/.local /home/appuser/.local
 
 ENV PATH=/home/appuser/.local/bin:$PATH
 

@@ -29,6 +29,11 @@ app = FastAPI(
     ]
 )
 
+# Configure rate limiter
+app.state.limiter = limiter
+
+app.add_middleware(SlowAPIMiddleware)
+
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
@@ -36,11 +41,6 @@ app.add_middleware(
     allow_methods=cnf.cors.cors_allow_methods,
     allow_headers=cnf.cors.cors_allow_headers,
 )
-
-# Configure rate limiter
-app.state.limiter = limiter
-
-app.add_middleware(SlowAPIMiddleware)
 
 # Custom handler for rate limiting
 @app.exception_handler(RateLimitExceeded)

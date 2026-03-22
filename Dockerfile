@@ -19,6 +19,7 @@ WORKDIR /app
 
 RUN useradd -m appuser
 
+# NOSONAR: permissions are explicitly set with --chmod
 COPY --from=builder --chown=appuser:appuser --chmod=555 /root/.local /home/appuser/.local
 
 ENV PATH=/home/appuser/.local/bin:$PATH

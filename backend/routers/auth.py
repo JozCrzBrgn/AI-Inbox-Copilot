@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -13,8 +15,22 @@ router = APIRouter()
     tags=["Authentication"],
     summary="Get JWT token",
     description="Generates a JWT token for user authentication.",
+    responses={
+        400: {
+            "description": "Invalid credentials",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Incorrect username or password."
+                    }
+                }
+            },
+        }
+    },
 )
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+):
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(

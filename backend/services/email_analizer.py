@@ -10,12 +10,6 @@ from ..core.config import get_settings
 # Configure logging
 logger = logging.getLogger(__name__)
 
-<<<<<<< HEAD
-=======
-cnf = get_settings()
-
-
->>>>>>> 6ab6e3009aa324320a51251d7640e56b698b0959
 def analyze_email(email_content: str, use_examples: bool = False) -> dict:
     """
     Analyze an email using OpenAI and return a dictionary with the insights
@@ -38,18 +32,11 @@ def analyze_email(email_content: str, use_examples: bool = False) -> dict:
         else:
             system_prompt = prompt_manager.get_analysis_prompt(email_content)
         
-<<<<<<< HEAD
         cnf = get_settings()
         
         # Configure API key
         openai.api_key = cnf.ai_agent.openai_api_key
         logger.info(f"Analyzing email with model: {cnf.ai_agent.openai_model}")
-=======
-        logger.info(f"Analyzing email with model: {cnf.ai_agent.openai_model}")
-        
-        # Configure API key
-        openai.api_key = cnf.ai_agent.openai_api_key
->>>>>>> 6ab6e3009aa324320a51251d7640e56b698b0959
         
         response = openai.chat.completions.create(
             model=cnf.ai_agent.openai_model,

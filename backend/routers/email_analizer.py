@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, Request
 from mocks.mock_email_analizer import analyze_email
 
 from ..middleware.rate_limiter import limiter
-from ..schemas.email_analizer import EmailAnalizerResponse
+from ..schemas.email_analizer import EmailAnalizerResponse, EmailAnalizerResquest
+from ..services.database import save_email
 from ..services.dependencies import get_current_user
 from ..services.slack import send_slack_alert
 

@@ -70,13 +70,14 @@ jobs:
           grep -v '^#' .env > .env.tmp
           mv .env.tmp .env
 
-      - name: Overwrite postgres credentials for CI
+      - name: Overwrite variables for CI
         run: |
           echo "PG_HOST=localhost" >> $GITHUB_ENV
           echo "PG_PORT=5432" >> $GITHUB_ENV
           echo "PG_DBNAME=${{ vars.PG_DBNAME }}" >> $GITHUB_ENV
           echo "PG_USER=${{ vars.PG_USER }}" >> $GITHUB_ENV
           echo "PG_PASSWORD=${{ secrets.PG_PASSWORD }}" >> $GITHUB_ENV
+          echo "OPENAI_MODEL=${{ secrets.OPENAI_MODEL }}" >> $GITHUB_ENV
 
       - name: Overwrite JWT token for CI test
         run: |

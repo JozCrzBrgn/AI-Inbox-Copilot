@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1
 COPY requirements.txt .
 
 RUN pip install --upgrade pip && \
-    pip install --user --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
 # -------- STAGE 2 --------
@@ -19,10 +19,10 @@ WORKDIR /app
 
 RUN useradd -m appuser
 
-# NOSONAR: permissions are explicitly set with --chmod
-COPY --from=builder --chown=appuser:appuser --chmod=555 /root/.local /home/appuser/.local
+COPY --from=builder --chown=appuser:appuser /install /usr/local
 
-ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 COPY --chown=appuser:appuser . .
 

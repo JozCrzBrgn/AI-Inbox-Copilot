@@ -1,0 +1,3 @@
+flet~=0.80.2
+flet-web~=0.80.2
+requests~=2.32.5

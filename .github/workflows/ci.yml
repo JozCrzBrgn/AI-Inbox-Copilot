@@ -93,7 +93,7 @@ jobs:
 
       - name: Run tests
         run: |
-          coverage run --omit="tests/*,mocks/*" -m pytest
+          coverage run --source=frontend,backend,prompts --omit="tests/*,mocks/*" -m pytest
           coverage report --fail-under=90
           coverage xml
 

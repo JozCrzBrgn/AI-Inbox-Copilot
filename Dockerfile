@@ -19,12 +19,12 @@ WORKDIR /app
 
 RUN useradd -m appuser
 
-COPY --from=builder --chown=appuser:appuser /install /usr/local
+COPY --from=builder --chown=appuser:appuser --chmod=555 /install /usr/local
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-COPY --chown=appuser:appuser . .
+COPY --chown=appuser:appuser --chmod=555 . .
 
 USER appuser
 

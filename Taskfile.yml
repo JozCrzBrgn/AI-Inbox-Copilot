@@ -100,7 +100,7 @@ tasks:
     cmds:
       - powershell -Command "Write-Host '🧪 Running tests with coverage analysis ...' -ForegroundColor Cyan"
       - powershell -Command "if (Test-Path 'security_reports/coverage_info.txt') { Remove-Item 'security_reports/coverage_info.txt' -Force }"
-      - coverage run --omit='tests/*,mocks/*' -m pytest
+      - coverage run --source=frontend,backend,prompts --omit='tests/*,mocks/*' -m pytest
       - powershell -Command "Write-Host '📊 Coverage Report:' -ForegroundColor Yellow"
       - coverage report --fail-under={{.MIN_COVERAGE}} > security_reports/coverage_info.txt
       - powershell -Command "Write-Host '✅ All tests passed. Results saved in security_reports/coverage_info.txt' -ForegroundColor Green"

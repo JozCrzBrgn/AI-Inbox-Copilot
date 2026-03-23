@@ -52,6 +52,18 @@ jobs:
           scanners: vuln
           hide-progress: true
 
+      # Scan image Python
+      - name: Scan Python image
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: python:3.12-slim
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          severity: CRITICAL
+          scanners: vuln
+          hide-progress: true
+
 
   # =========================
   # 2️⃣ BANDIT (Unsafe code)

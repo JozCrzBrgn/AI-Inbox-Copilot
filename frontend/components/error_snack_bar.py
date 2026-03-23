@@ -1,5 +1,6 @@
 import flet as ft
 
+
 def show_snack(page, message, color=None):
     snack = ft.SnackBar(
         content=ft.Text(message),

@@ -1,8 +1,12 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+
+from backend.services.database import init_database
 
 from .core.config import get_settings
 from .middleware.rate_limiter import limiter
@@ -11,8 +15,15 @@ from .routers import auth, email_analizer, health, info
 cnf = get_settings()
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_database()
+    yield
+
+
 # FastAPI Initialization
 app = FastAPI(
+    lifespan=lifespan,
     title=cnf.api_info.name,
     description=cnf.api_info.description,
     version=cnf.api_info.version,
@@ -60,4 +71,3 @@ app.include_router(health.router, tags=["Information"])
 app.include_router(info.router, tags=["Information"])
 app.include_router(auth.router, tags=["Authentication"])
 app.include_router(email_analizer.router, tags=["Email analyzer"], prefix="/v1")
-

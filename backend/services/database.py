@@ -1,7 +1,10 @@
+import logging
+
 import psycopg2
 
 from ..core.config import get_settings
 
+logger = logging.getLogger(__name__)
 cnf = get_settings()
 
 # PostgreSQL Configuration
@@ -35,21 +38,22 @@ def init_database():
             reply TEXT
         )
     """)
-    
+
     conn.commit()
     cur.close()
     conn.close()
+    logger.info("Database initialized successfully.")
 
 def save_email(customer_name: str, intent: str, priority: str, sentiment: str, summary: str, reply: str):
     """Save an analyzed email in the database"""
     conn = get_connection()
     cur = conn.cursor()
-    
+
     cur.execute("""
         INSERT INTO emails (customer_name, intent, priority, sentiment, summary, reply)
         VALUES (%s, %s, %s, %s, %s, %s)
     """, (customer_name, intent, priority, sentiment, summary, reply))
-    
+
     conn.commit()
     cur.close()
     conn.close()
@@ -58,15 +62,15 @@ def get_all_emails():
     """It retrieves all emails from the history."""
     conn = get_connection()
     cur = conn.cursor()
-    
+
     cur.execute("""
         SELECT id, date, customer_name, intent, priority, sentiment, summary, reply
         FROM emails
         ORDER BY date DESC
     """)
-    
+
     rows = cur.fetchall()
-    
+
     emails = []
     for row in rows:
         emails.append({
@@ -79,15 +83,8 @@ def get_all_emails():
             'summary': row[6],
             'reply': row[7]
         })
-    
+
     cur.close()
     conn.close()
-    
-    return emails
 
-# Initialize the database when importing the module
-try:
-    init_database()
-except Exception as e:
-    # Keep the application running in test/local context without an active database.
-    print(f"Warning: The database could not be initialized: {e}")
+    return emails

@@ -1,3 +1,5 @@
+import asyncio
+import os
 import threading
 
 import flet as ft
@@ -5,7 +7,10 @@ import requests
 from components.error_snack_bar import show_snack
 from components.result_card import get_priority_color, result_card
 from services.api import analyze
+from views.history_view import HistoryView
 from views.login_view import LoginView
+
+URL_GITHUB = os.getenv("URL_GITHUB", "https://github.com")
 
 
 def MainView(page, go_to_main):
@@ -14,6 +19,17 @@ def MainView(page, go_to_main):
     loader = ft.ProgressRing(visible=False)
 
     results = ft.Column(visible=False, spacing=20)
+
+    def open_github(e):
+        asyncio.run_coroutine_threadsafe(
+            page.launch_url(URL_GITHUB),
+            asyncio.get_event_loop()
+        )
+
+    def go_to_history(e):
+        page.views[:] = [v for v in page.views if getattr(v, "route", None) != "/history"]
+        page.views.append(HistoryView(page, go_to_main))
+        page.update()
 
     def logout(e):
         if hasattr(page.session, "token"):
@@ -86,16 +102,42 @@ def MainView(page, go_to_main):
         controls=[
             ft.Column([
                 email_input,
-                ft.ElevatedButton(
-                    "Analyze",
-                    on_click=run_analysis,
-                    style=ft.ButtonStyle(
-                        bgcolor=ft.Colors.BLUE_600,
-                        color=ft.Colors.WHITE
-                    )
+                ft.Row(
+                    [
+                        ft.ElevatedButton(
+                            "Analyze",
+                            on_click=run_analysis,
+                            icon=ft.Icons.SEARCH,
+                            style=ft.ButtonStyle(
+                                bgcolor=ft.Colors.BLUE_600,
+                                color=ft.Colors.WHITE
+                            )
+                        ),
+                        ft.ElevatedButton(
+                            "History",
+                            on_click=go_to_history,
+                            icon=ft.Icons.HISTORY,
+                            style=ft.ButtonStyle(
+                                bgcolor=ft.Colors.BLUE_GREY_700,
+                                color=ft.Colors.WHITE
+                            )
+                        ),
+                    ], 
+                    spacing=15
                 ),
                 loader,
-                results
-            ], spacing=25)
+                results,
+                ft.Container(expand=True),
+                ft.GestureDetector(
+                    on_tap=open_github,
+                    content=ft.Text(
+                        "Made with ❤️ by Josue Cruz",
+                        size=12,
+                        color=ft.Colors.BLUE_GREY_400,
+                        text_align=ft.TextAlign.CENTER
+                    ),
+                    mouse_cursor=ft.MouseCursor.CLICK
+                )
+            ], spacing=25, expand=True)
         ]
     )

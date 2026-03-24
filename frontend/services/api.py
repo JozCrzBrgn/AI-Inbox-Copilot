@@ -21,3 +21,10 @@ def analyze(email, token):
         json={"email_content": email},
         headers={"Authorization": f"Bearer {token}"}
     )
+
+
+def get_history(token):
+    return requests.get(
+        f"{API_URL}/v1/emails",
+        headers={"Authorization": f"Bearer {token}"}
+    )

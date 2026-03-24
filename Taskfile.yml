@@ -49,8 +49,10 @@ tasks:
     desc: Clean and standardize the order of imports with ruff => task sort
     cmds:
       - powershell -Command Write-Host "🔥 Checking and ordering ..." -ForegroundColor Green
+      - ruff check .
+      - powershell -Command Write-Host "✅ Ruff Check completed." -ForegroundColor Green
       - ruff check --select I --fix
-      - powershell -Command Write-Host "✅ Ruff analysis completed." -ForegroundColor Green
+      - powershell -Command Write-Host "✅ Ruff ordering completed." -ForegroundColor Green
 
   # -------------------------
   # PIP 

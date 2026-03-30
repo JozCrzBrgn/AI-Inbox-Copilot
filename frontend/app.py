@@ -3,7 +3,7 @@ from views.login_view import LoginView
 from views.main_view import MainView
 
 
-def main(page: ft.Page):
+async def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.DARK
 
     def go_to_main(token):
@@ -21,9 +21,9 @@ def main(page: ft.Page):
 
     page.update()
 
-
-ft.run(
-    main=main,
-    view=ft.AppView.WEB_BROWSER,
-    port=8550,
-)
+if __name__ == "__main__":
+    ft.run(
+        main=main,
+        view=ft.AppView.WEB_BROWSER,
+        port=8550,
+    )

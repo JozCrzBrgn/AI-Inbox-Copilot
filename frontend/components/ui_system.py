@@ -1,13 +1,13 @@
 import flet as ft
 
-# 🎨 Colores base (SaaS style)
+# Base colors
 BG_DARK = "#0F172A"
 SURFACE = "#1E293B"
 PRIMARY = "#8B5CF6"
 SECONDARY = "#3B82F6"
 TEXT_SECONDARY = "#94A3B8"
 
-# 🌫 Glass Container
+# Glass Container
 class GlassContainer(ft.Container):
     def __init__(self, content, padding=20, expand=False):
         super().__init__()
@@ -19,7 +19,7 @@ class GlassContainer(ft.Container):
         self.border = ft.Border.all(1, ft.Colors.with_opacity(0.1, ft.Colors.WHITE))
         self.blur = ft.Blur(20, 20)
 
-# 🔘 Botón moderno
+# Modern button
 class PrimaryButton(ft.Container):
     def __init__(self, text, on_click):
         super().__init__()

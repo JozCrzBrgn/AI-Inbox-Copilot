@@ -4,8 +4,10 @@ import threading
 
 import flet as ft
 import requests
+from components.copyable import copyable_block
 from components.error_snack_bar import show_snack
 from components.result_card import get_priority_color, result_card
+from components.ui_system import GlassContainer, PrimaryButton
 from services.api import analyze
 from views.history_view import HistoryView
 from views.login_view import LoginView
@@ -14,7 +16,13 @@ URL_GITHUB = os.getenv("URL_GITHUB", "https://github.com")
 
 
 def MainView(page, go_to_main):
-    email_input = ft.TextField(multiline=True, min_lines=8, expand=True)
+    email_input = ft.TextField(
+                    hint_text="Paste the email content here...",
+                    multiline=True, min_lines=5, max_lines=5,
+                    border=ft.InputBorder.NONE,
+                    color="white",
+                    expand=True
+                )
 
     loader = ft.ProgressRing(visible=False)
 
@@ -39,14 +47,7 @@ def MainView(page, go_to_main):
         page.views.append(LoginView(page, go_to_main))
         page.update()
 
-    def toggle_theme(e):
-        page.theme_mode = (
-            ft.ThemeMode.LIGHT if page.theme_mode == ft.ThemeMode.DARK else ft.ThemeMode.DARK
-        )
-        page.update()
-
     def run_analysis(e):
-        # Show loader
         loader.visible = True
         results.visible = False
         page.update()
@@ -57,17 +58,46 @@ def MainView(page, go_to_main):
                 res = analyze(email_input.value, token)
 
                 if res.status_code == 200:
+
                     data = res.json()
+                    sentiment = data.get("sentiment", "")
                     priority = data.get("priority", "")
 
+                    sentiment_emoji = {
+                        "positive": "😊",
+                        "neutral": "😐", 
+                        "negative": "😞"
+                    }.get(sentiment.lower(), "")
+                    sentiment_text = f"{sentiment_emoji} {sentiment.capitalize()}" if sentiment_emoji else sentiment
+                    
+                    priority_emoji = {
+                        "low": "🟢",
+                        "medium": "🟡", 
+                        "high": "🔴"
+                    }.get(priority.lower(), "")
+                    priority_text = f"{priority_emoji} {priority.capitalize()}" if priority_emoji else priority.capitalize()
+
                     results.controls = [
-                        ft.Row([
-                            result_card("Priority", priority, get_priority_color(priority)),
-                            result_card("Sentiment", data.get("sentiment", ""))
-                        ], spacing=20),
-                        result_card("Summary", data.get("summary", "")),
-                        result_card("Suggested Subject", data.get("suggested_subject", "")),
-                        result_card("Suggested Reply", data.get("suggested_reply", "")),
+                        ft.Row(
+                            [
+                                result_card("Priority", priority_text, get_priority_color(priority)),
+                                result_card("Sentiment", sentiment_text, get_priority_color(priority)),
+                                result_card("Summary", data.get("summary", ""), get_priority_color(priority)),
+                            ], 
+                            spacing=20,
+                            expand=True,
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            vertical_alignment=ft.CrossAxisAlignment.START
+                        ),
+                        ft.Row(
+                            [
+                                copyable_block(page, "Suggested Subject", data.get("suggested_subject", "")),
+                                copyable_block(page, "Suggested Reply", data.get("suggested_reply", ""))
+                            ],
+                            spacing=50,
+                            alignment=ft.MainAxisAlignment.START,
+                            vertical_alignment=ft.CrossAxisAlignment.START
+                        )
                     ]
 
                     results.visible = True
@@ -87,57 +117,81 @@ def MainView(page, go_to_main):
                 loader.visible = False
                 page.update()
 
-        # Run in a separate thread
         threading.Thread(target=task).start()
 
     return ft.View(
         route="/main",
-        appbar=ft.AppBar(
-            title=ft.Text("AI Inbox Copilot"),
-            actions=[
-                ft.IconButton(icon=ft.Icons.DARK_MODE, on_click=toggle_theme),
-                ft.IconButton(icon=ft.Icons.LOGOUT, on_click=logout)
-            ]
-        ),
+        bgcolor="#0F172A",
         controls=[
-            ft.Column([
-                email_input,
-                ft.Row(
-                    [
-                        ft.ElevatedButton(
-                            "Analyze",
-                            on_click=run_analysis,
-                            icon=ft.Icons.SEARCH,
-                            style=ft.ButtonStyle(
-                                bgcolor=ft.Colors.BLUE_600,
-                                color=ft.Colors.WHITE
-                            )
+            ft.Row([
+                # Sidebar
+                ft.Container(
+                    width=90,
+                    bgcolor="#1E293B",
+                    border_radius=20,
+                    content=ft.Column([
+                        ft.IconButton(
+                            icon=ft.Icons.ANALYTICS_OUTLINED,
+                            icon_size=40,
+                            icon_color="#8B5CF6",
+                            on_click=lambda e: None
                         ),
-                        ft.ElevatedButton(
-                            "History",
-                            on_click=go_to_history,
-                            icon=ft.Icons.HISTORY,
-                            style=ft.ButtonStyle(
-                                bgcolor=ft.Colors.BLUE_GREY_700,
-                                color=ft.Colors.WHITE
-                            )
+                        ft.IconButton(
+                            icon=ft.Icons.TABLE_CHART_OUTLINED,
+                            icon_size=40,
+                            on_click=go_to_history
                         ),
-                    ], 
-                    spacing=15
+                        ft.Container(expand=True),
+                        ft.IconButton(
+                            icon=ft.Icons.LOGOUT,
+                            icon_size=40,
+                            on_click=logout
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.START,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=20)
                 ),
-                loader,
-                results,
-                ft.Container(expand=True),
-                ft.GestureDetector(
-                    on_tap=open_github,
-                    content=ft.Text(
-                        "Made with ❤️ by Josue Cruz",
-                        size=12,
-                        color=ft.Colors.BLUE_GREY_400,
-                        text_align=ft.TextAlign.CENTER
-                    ),
-                    mouse_cursor=ft.MouseCursor.CLICK
+
+                ft.Container(
+                    expand=True,
+                    padding=30,
+                    content=ft.Column([
+                        ft.Text("Email Intelligence", size=28, weight="bold"),
+
+                        ft.Container(height=20),
+
+                        GlassContainer(
+                            content=ft.Column([
+                                email_input,
+                                ft.Row([
+                                    PrimaryButton("Analyze with AI", run_analysis),
+                                ], 
+                                alignment=ft.MainAxisAlignment.START)
+                            ])
+                        ),
+
+                        ft.Container(height=20),
+
+                        loader,
+
+                        results,
+
+                        ft.Container(expand=True),
+
+                        ft.GestureDetector(
+                            on_tap=open_github,
+                            content=ft.Text(
+                                "Made with ❤️ by Josue Cruz",
+                                size=12,
+                                color=ft.Colors.BLUE_GREY_400,
+                                text_align=ft.TextAlign.CENTER
+                            ),
+                            mouse_cursor=ft.MouseCursor.CLICK
+                        )
+                    ],
+                    spacing=20)
                 )
-            ], spacing=25, expand=True)
+            ], expand=True)
         ]
     )

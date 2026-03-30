@@ -23,6 +23,7 @@ COPY --from=builder --chown=appuser:appuser --chmod=555 /install /usr/local
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 
 COPY --chown=appuser:appuser --chmod=555 . .
 

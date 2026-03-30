@@ -1,3 +1,4 @@
+# -------- STAGE 1 --------
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
@@ -9,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
+# -------- STAGE 2 --------
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -28,6 +30,7 @@ EXPOSE 8550
 
 ENV PYTHONUNBUFFERED=1
 ENV FLET_WEB_RENDERER=canvaskit
+ENV PYTHONPATH=/app
 
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser

@@ -2,9 +2,9 @@ from typing import Annotated, List
 
 from fastapi import APIRouter, Depends, Request
 
-#TODO: from ..services.email_analizer import analyze_email
-from mocks.mock_email_analizer import analyze_email
+from ..core.config import get_settings
 
+# TODO: from mocks.mock_email_analizer import analyze_email
 from ..middleware.rate_limiter import limiter
 from ..schemas.email_analizer import (
     EmailAnalizerResponse,
@@ -13,9 +13,12 @@ from ..schemas.email_analizer import (
 )
 from ..services.database import get_all_emails, save_email
 from ..services.dependencies import get_current_user
+from ..services.email_analizer import analyze_email
 from ..services.slack import send_slack_alert
 
 router = APIRouter()
+
+cnf = get_settings()
 
 
 @router.post(
@@ -25,7 +28,7 @@ router = APIRouter()
     description="API to automatically analyze emails and help Customer Service (CS) teams prioritize and respond faster",
     tags=["Email analyzer"],
 )
-@limiter.limit("2/minute")
+@limiter.limit(cnf.security.rate_limit)
 async def analyze_email_endpoint(
     request: Request,
     payload: EmailAnalizerResquest,
@@ -70,13 +73,13 @@ async def analyze_email_endpoint(
         priority=result["priority"],
         sentiment=result["sentiment"],
         summary=result["summary"],
-        reply=result["suggested_reply"]
+        reply=result["suggested_reply"],
     )
 
     # Send alert to Slack if it's high priority
     if result["priority"].lower() == "high":
         send_slack_alert(result)
-    
+
     # Build response with metadata
     return result
 
@@ -88,7 +91,7 @@ async def analyze_email_endpoint(
     description="Get all emails that have been analyzed and stored in the database, ordered by most recent",
     tags=["Email analyzer"],
 )
-@limiter.limit("2/minute")
+@limiter.limit(cnf.security.rate_limit)
 async def get_all_emails_endpoint(
     request: Request,
     username: Annotated[str, Depends(get_current_user)],

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -8,13 +8,13 @@ class EmailAnalizerResquest(BaseModel):
 
 
 class EmailAnalizerResponse(BaseModel):
-    customer_name: str
+    customer_name: str = "Unknown"
     intent: str
     summary: str
-    priority: str
-    sentiment: str
-    suggested_subject: str
-    suggested_reply: str
+    priority: Literal["low", "medium", "high"]
+    sentiment: Literal["positive", "neutral", "negative"]
+    suggested_subject: str = ""
+    suggested_reply: str = ""
 
 
 class EmailResponse(BaseModel):

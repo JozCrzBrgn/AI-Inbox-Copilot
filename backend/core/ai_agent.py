@@ -11,8 +11,11 @@ class AiAgentSettings(BaseSettings):
 
     openai_api_key: str
     openai_model: str
+    openai_cheap_model: str
     openai_temperature: float
+    openai_cheap_temperature: float
     openai_max_tokens: int
+    openai_cheap_max_tokens: int
     openai_timeout: int
 
     @field_validator('openai_api_key')
@@ -35,8 +38,7 @@ class AiAgentSettings(BaseSettings):
     def validate_model(cls, v):
         """Verify that the model is one of the supported ones"""
         allowed_models = [
-            'gpt-4', 'gpt-4-turbo', 'gpt-4o',
-            'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'
+            'gpt-4o-mini', 'gpt-3.5-turbo'
         ]
         
         if v not in allowed_models:

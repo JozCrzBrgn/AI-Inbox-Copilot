@@ -3,14 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi import Depends, Request
 
-from backend.main import app
 from backend.services.dependencies import get_current_user
-
-
-@pytest.fixture
-def client():
-    from fastapi.testclient import TestClient
-    return TestClient(app)
 
 
 def test_get_current_user_returns_username():
@@ -30,7 +23,7 @@ def test_get_current_user_returns_username():
     assert isinstance(result, str)
 
 
-def test_get_current_user_in_endpoint(client):
+def test_get_current_user_in_endpoint(app_client):
     """Test with simulated endpoint"""
     
     # Create a temporary test endpoint
@@ -43,14 +36,14 @@ def test_get_current_user_in_endpoint(client):
         return {"user": current_user}
     
     # Set up the temporary router
-    app.include_router(test_router)
+    app_client.app.include_router(test_router)
     
     # Create token for authentication
     from backend.services.security import create_access_token
     token = create_access_token({"sub": "testuser"})
     
     # Make request with token
-    response = client.get(
+    response = app_client.get(
         "/test-protected",
         headers={"Authorization": f"Bearer {token}"}
     )
@@ -60,7 +53,7 @@ def test_get_current_user_in_endpoint(client):
     assert data["user"] == "testuser"
 
 
-def test_get_current_user_no_token(client):
+def test_get_current_user_no_token(app_client):
     """Call a protected endpoint without a token"""
     from fastapi import APIRouter
     
@@ -70,10 +63,10 @@ def test_get_current_user_no_token(client):
     async def protected_endpoint(current_user: str = Depends(get_current_user)):
         return {"user": current_user}
     
-    app.include_router(test_router)
+    app_client.app.include_router(test_router)
     
     # Make request without token
-    response = client.get("/test-protected")
+    response = app_client.get("/test-protected")
     
     # It should return 401 Unauthorized
     assert response.status_code == 401
@@ -81,7 +74,7 @@ def test_get_current_user_no_token(client):
     assert "detail" in data
 
 
-def test_get_current_user_invalid_token(client):
+def test_get_current_user_invalid_token(app_client):
     """Use invalid token"""
     from fastapi import APIRouter
     
@@ -91,10 +84,10 @@ def test_get_current_user_invalid_token(client):
     async def protected_endpoint(current_user: str = Depends(get_current_user)):
         return {"user": current_user}
     
-    app.include_router(test_router)
+    app_client.app.include_router(test_router)
     
     # Make request with invalid token
-    response = client.get(
+    response = app_client.get(
         "/test-protected",
         headers={"Authorization": "Bearer invalid.token.here"}
     )

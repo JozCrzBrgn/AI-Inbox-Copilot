@@ -186,6 +186,7 @@ PR / push to main
 | 1 | **Trivy** | Filesystem (secrets, misconfigs, CVEs) | ✅ 0 findings |
 | 1 | **Trivy** | `postgres:16` image (CRITICAL CVEs) | ✅ 0 findings |
 | 1 | **Trivy** | `python:3.12-slim` image (CRITICAL CVEs) | ✅ 0 findings |
+| 1 | **Trivy** | `redis:8-alpine` image (CRITICAL CVEs) | ✅ 0 findings |
 | 2 | **Bandit** | Python SAST — HIGH severity, `-lll` flag | ✅ 0 findings |
 
 Bandit runs after Trivy succeeds (`needs: trivy`), ensuring no HIGH-severity Python vulnerability escapes the pipeline. Results are archived in `security_reports/`.
@@ -233,6 +234,9 @@ task sort
 
 # Python SAST
 task bandit
+
+# Audit
+task audit
 
 # Validate .env against .env.example
 task validate-env

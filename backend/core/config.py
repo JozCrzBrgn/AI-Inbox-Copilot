@@ -4,6 +4,7 @@ from .ai_agent import AiAgentSettings
 from .api_info import ApiInfoSettings
 from .cors import CorsSettings
 from .database import DatabaseSettings
+from .redis_cache import RedisSettings
 from .security import SecuritySettings
 from .slack import SlackSettings
 
@@ -16,6 +17,8 @@ class Settings:
         self.cors = CorsSettings()
         self.slack = SlackSettings()
         self.db = DatabaseSettings()
+        self.redis = RedisSettings()
+
 
 @lru_cache
 def get_settings() -> Settings:

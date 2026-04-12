@@ -20,7 +20,7 @@ class EmailAnalizerResponse(BaseModel):
 class EmailResponse(BaseModel):
     id: int
     date: Optional[str]
-    customer_name: str
+    customer_name: Optional[str] = None
     intent: str
     priority: str
     sentiment: str

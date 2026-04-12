@@ -4,6 +4,13 @@ import logging
 import openai
 from fastapi.exceptions import HTTPException
 
+from backend.services.redis_client import (
+    _cache_get,
+    _cache_set,
+    _check_token_budget,
+    _estimate_tokens,
+    _hash,
+)
 from prompts import prompt_manager
 
 from ..core.config import get_settings
@@ -14,11 +21,12 @@ from .prompt_security import (
     sanitize_and_validate,
 )
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
 
-def analyze_email(email_content: str, use_examples: bool = False) -> dict:
+def analyze_email(
+    email_content: str, username: str, use_examples: bool = False
+) -> dict:
     """
     Analyze an email using OpenAI and return a dictionary with the insights
 
@@ -30,68 +38,69 @@ def analyze_email(email_content: str, use_examples: bool = False) -> dict:
         Dictionary with the analyzed fields
     """
     try:
-        # Security checks
-        # 1. Validate that it is a support email
         if not email_content or not isinstance(email_content, str):
             return _get_security_violation_result("Empty or invalid input")
-        else:
-            logger.info("Email content is valid, first validation passed")
 
-        # 2. Detection + cleaning + blocking decision (single place)
+        # 1. SANITIZE + DETECT
         validation = sanitize_and_validate(email_content)
 
         if validation["should_block"]:
-            logger.warning(
-                f"Input LOCKED. Confidence: {validation['injection_report']['confidence']}, "
-                f"Patterns: {validation['injection_report']['detected_patterns']}"
-            )
+            content_hash = _hash(email_content)
+            _cache_set(f"blocked:{content_hash}", True, ttl=600)
+
+            logger.warning("BLOCKED input detected")
             return _get_security_violation_result("Prompt injection detected")
-        else:
-            logger.info("Email content is valid, second validation passed")
 
         cleaned_content = validation["safe_text"]
+
         if not cleaned_content:
-            logger.warning("Content became empty after cleaning")
             return _get_security_violation_result("Invalid content after sanitization")
-        else:
-            logger.info("Email content is valid, third validation passed")
 
-        # 3. Validate that it is a support email (on clean text)
+        content_hash = _hash(cleaned_content)
+
+        # 2. VALIDATE SUPPORT EMAIL
         if not is_email_support(cleaned_content):
-            logger.warning("The input does not seem to be a support email")
             return _get_security_violation_result("INVALID_INPUT")
-        else:
-            logger.info("Email content is valid, fourth validation passed")
 
-        # 4. Cheap classification (on clean text)
-        cheap_result = classify_intent_cheap(cleaned_content)
+        # 3. CACHE FINAL RESULT
+        cache_key = f"analysis:v1:{content_hash}"
+        cached = _cache_get(cache_key)
+        if cached:
+            logger.info("Cache HIT (analysis)")
+            return cached
+
+        # 4. CHEAP CLASSIFIER (CACHE)
+        intent_key = f"intent:{content_hash}"
+        cheap_result = _cache_get(intent_key)
+
+        if not cheap_result:
+            cheap_result = classify_intent_cheap(cleaned_content)
+            _cache_set(intent_key, cheap_result, ttl=3600)
+        else:
+            logger.info("Cache HIT (intent)")
 
         if cheap_result.get("category") != "SUPPORT":
-            logger.info(
-                f"Pre-qualification: {cheap_result.get('category')} — skipping full analysis"
-            )
             return _get_non_support_result(cheap_result)
-        else:
-            logger.info("Email content is valid, fifth validation passed")
 
-        # 5. Semantic validation with cheap LLM
-        llm_injection_check = detect_injection_with_llm(cleaned_content)
+        # 5. INJECTION LLM (CACHE)
+        inj_key = f"injection:{content_hash}"
+        llm_injection_check = _cache_get(inj_key)
+
+        if not llm_injection_check:
+            llm_injection_check = detect_injection_with_llm(cleaned_content)
+            _cache_set(inj_key, llm_injection_check, ttl=3600)
+        else:
+            logger.info("Cache HIT (injection)")
+
         if (
             llm_injection_check["is_manipulation"]
             and llm_injection_check["confidence"] >= 0.7
         ):
-            logger.warning(
-                f"LLM detected semantic manipulation."
-                f"Confidence: {llm_injection_check['confidence']}, "
-                f"Reason: {llm_injection_check['reason']}"
-            )
             return _get_security_violation_result(
                 f"Semantic injection detected: {llm_injection_check['reason']}"
             )
-        else:
-            logger.info("Email content is valid, sixth validation passed")
 
-        # Get the manager prompt (with or without examples)
+        # 6. PROMPT
         if use_examples:
             system_prompt = prompt_manager.get_analysis_prompt(
                 cleaned_content,
@@ -101,11 +110,18 @@ def analyze_email(email_content: str, use_examples: bool = False) -> dict:
         else:
             system_prompt = prompt_manager.get_analysis_prompt(cleaned_content)
 
-        # Configure API key
         cnf = get_settings()
         openai.api_key = cnf.ai_agent.openai_api_key
-        logger.info(f"Analyzing email with model: {cnf.ai_agent.openai_model}")
 
+        # 7. TOKEN BUDGET PER USER
+        estimated_tokens = (
+            _estimate_tokens(cleaned_content + system_prompt)
+            + cnf.ai_agent.openai_max_tokens
+        )
+
+        _check_token_budget(username, estimated_tokens)
+
+        # 8. OPENAI CALL
         response = openai.chat.completions.create(
             model=cnf.ai_agent.openai_model,
             messages=[
@@ -116,24 +132,20 @@ def analyze_email(email_content: str, use_examples: bool = False) -> dict:
             max_tokens=cnf.ai_agent.openai_max_tokens,
         )
 
-        # Extract and parse the JSON from the response
         result_text = response.choices[0].message.content
-        logger.debug(f"Raw response: {result_text[:200]}...")
-
-        # Clean up any markdown or extra text
         result_text = _clean_json_response(result_text)
 
         try:
             result = json.loads(result_text)
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error: {e}")
-            # Try to extract JSON from the response if there is additional text
+        except json.JSONDecodeError:
             result = _extract_json_from_text(result_text)
 
-        # Validate and normalize the result
         result = _normalize_result(result)
 
-        logger.info(f"Email analyzed successfully: {result.get('intent', 'unknown')}")
+        # 9. FINAL CACHE
+        _cache_set(cache_key, result, ttl=21600)
+
+        logger.info(f"Email analyzed: {result.get('intent')}")
         return result
 
     except HTTPException:
@@ -141,6 +153,9 @@ def analyze_email(email_content: str, use_examples: bool = False) -> dict:
     except Exception as e:
         logger.error(f"Error analyzing email: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="AI processing failed")
+
+
+# ------------------ HELPERS ------------------ #
 
 
 def _get_security_violation_result(reason: str) -> dict:
@@ -222,13 +237,10 @@ def _normalize_result(result: dict) -> dict:
             val = "Unknown" if field == "customer_name" else "Not specified"
         normalized[field] = str(val)
 
-    # Normalize specific values
-    valid_priorities = ["low", "medium", "high"]
-    if normalized["priority"].lower() not in valid_priorities:
+    if normalized["priority"].lower() not in ["low", "medium", "high"]:
         normalized["priority"] = "medium"
 
-    valid_sentiments = ["positive", "neutral", "negative"]
-    if normalized["sentiment"].lower() not in valid_sentiments:
+    if normalized["sentiment"].lower() not in ["positive", "neutral", "negative"]:
         normalized["sentiment"] = "neutral"
 
     return normalized
@@ -250,12 +262,13 @@ def _get_default_result() -> dict:
 def _get_non_support_result(classification: dict) -> dict:
     """Returns results for emails that are not supported"""
     category = classification.get("category", "OTHER")
+
     return {
         "customer_name": "Unknown",
         "intent": f"non_support_{category.lower()}",
-        "summary": f"This message was classified as {category} and does not require customer support action.",
+        "summary": f"This message was classified as {category}",
         "priority": "low",
         "sentiment": "neutral",
         "suggested_subject": "Message received",
-        "suggested_reply": "Thank you for your message. If you need customer support, please contact us at support@example.com",
+        "suggested_reply": "Thank you for your message.",
     }

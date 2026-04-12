@@ -1,9 +1,9 @@
-version: '3'
+version: "3"
 silent: true
 
 tasks:
   # -------------------------
-  # VALIDATION 
+  # VALIDATION
   # uvicorn backend.main:app --reload
   # -------------------------
   validate-env:
@@ -43,7 +43,7 @@ tasks:
           Write-Host '✅ .env validation passed!' -ForegroundColor Green
         "
   # -------------------------
-  # RUFF 
+  # RUFF
   # -------------------------
   sort:
     desc: Clean and standardize the order of imports with ruff => task sort
@@ -55,34 +55,35 @@ tasks:
       - powershell -Command Write-Host "✅ Ruff ordering completed." -ForegroundColor Green
 
   # -------------------------
-  # PIP 
+  # PIP
   # -------------------------
   install:
     desc: Add a library to my .venv file and add it to my requirements.txt file along with its version => task install -- library
     vars:
-      PACKAGE: '{{.CLI_ARGS}}'
+      PACKAGE: "{{.CLI_ARGS}}"
     cmds:
       - powershell -Command Write-Host "➕ Installing the {{.PACKAGE}} library in .venv/ ..." -ForegroundColor Green
       - pip install {{.PACKAGE}}
       - powershell -Command "(pip freeze | Select-String '^{{.PACKAGE}}==').Line -replace '^{{.PACKAGE}}==','{{.PACKAGE}}~=' | Out-File -Append -Encoding utf8 requirements.txt"
       - powershell -Command Write-Host "✅ {{.PACKAGE}} installed in .venv/ and added to requirements.txt" -ForegroundColor Green
-  
-  # -------------------------
-  # TRIVY 
-  # task scan-image -- postgres:16
-  # -------------------------
-  scan-image:
-    desc: Scan any Docker image with Trivy => task scan-image -- IMAGE:TAG
-    vars:
-      IMAGE: '{{.CLI_ARGS}}'
-    cmds:
-      - powershell -Command "Write-Host '🔍 Scanning {{.IMAGE}} with Trivy and 🧹 delete file trivy_info.txt if exists...' -ForegroundColor Green"
-      - powershell -Command "if (Test-Path security_reports/trivy_info.txt) { Remove-Item security_reports/trivy_info.txt -Force }"
-      - trivy image --severity CRITICAL --scanners vuln --ignore-unfixed --exit-code 1 --format table --no-progress {{.IMAGE}} > security_reports/trivy_info.txt
-      - powershell -Command "Write-Host '✅ Scan completed. Results saved in security_reports/trivy_info.txt' -ForegroundColor Green"
 
   # -------------------------
-  # BANDIT 
+  # TRIVY
+  # -------------------------
+  scan-image:
+    desc: Scan Docker images with Trivy => task scan-image
+    cmds:
+      - powershell -Command "Write-Host '🔍 Scanning with Trivy and 🧹 delete file trivy_info.txt if exists...' -ForegroundColor Green"
+      - powershell -Command "if (Test-Path security_reports/trivy_postgres.txt) { Remove-Item security_reports/trivy_postgres.txt -Force }"
+      - powershell -Command "if (Test-Path security_reports/trivy_python.txt) { Remove-Item security_reports/trivy_python.txt -Force }"
+      - powershell -Command "if (Test-Path security_reports/trivy_redis.txt) { Remove-Item security_reports/trivy_redis.txt -Force }"
+      - trivy image --severity CRITICAL --scanners vuln --ignore-unfixed --exit-code 1 --format table --no-progress postgres:16 > security_reports/trivy_postgres.txt
+      - trivy image --severity CRITICAL --scanners vuln --ignore-unfixed --exit-code 1 --format table --no-progress python:3.12-slim > security_reports/trivy_python.txt
+      - trivy image --severity CRITICAL --scanners vuln --ignore-unfixed --exit-code 1 --format table --no-progress redis:8-alpine > security_reports/trivy_redis.txt
+      - powershell -Command "Write-Host '✅ Scan completed. Results saved in security_reports/trivy_postgres.txt, security_reports/trivy_python.txt, security_reports/trivy_redis.txt' -ForegroundColor Green"
+
+  # -------------------------
+  # BANDIT
   # -------------------------
   bandit:
     desc: Detect unsafe Python code => task bandit
@@ -93,12 +94,12 @@ tasks:
       - powershell -Command "Write-Host '✅ Scan completed. Results saved in security_reports/bandit_info.txt' -ForegroundColor Green"
 
   # -------------------------
-  # COVERAGE 
+  # COVERAGE
   # -------------------------
   cover:
     desc: Run tests with coverage (requires 90% minimum) => task cover
     vars:
-      MIN_COVERAGE: '90'
+      MIN_COVERAGE: "90"
     cmds:
       - powershell -Command "Write-Host '🧪 Running tests with coverage analysis ...' -ForegroundColor Cyan"
       - powershell -Command "if (Test-Path 'security_reports/coverage_info.txt') { Remove-Item 'security_reports/coverage_info.txt' -Force }"
@@ -108,7 +109,28 @@ tasks:
       - powershell -Command "Write-Host '✅ All tests passed. Results saved in security_reports/coverage_info.txt' -ForegroundColor Green"
 
   # -------------------------
-  # DOCKER 
+  # PIP-AUDIT
+  # -------------------------
+  audit:
+    desc: Audit Python dependencies for vulnerabilities => task audit
+    cmds:
+      - powershell -Command "Write-Host '🔍 Auditing Python dependencies...' -ForegroundColor Cyan"
+      - powershell -Command "if (Test-Path 'security_reports/pip_audit_info.txt') { Remove-Item 'security_reports/pip_audit_info.txt' -Force }"
+      - pip-audit --strict --ignore-vuln CVE-2024-23342 --ignore-vuln CVE-2026-33936 > security_reports/pip_audit_info.txt
+      - powershell -Command "Write-Host '✅ Pip-audit completed. Results saved in security_reports/pip_audit_info.txt' -ForegroundColor Green"
+
+  # -------------------------
+  # AUDIT-FIX
+  # -------------------------
+  audit-fix:
+    desc: Audit Python dependencies for vulnerabilities and fix them => task audit-fix
+    cmds:
+      - powershell -Command "Write-Host '🔧 Fixing Python dependencies...' -ForegroundColor Cyan"
+      - pip-audit --fix --ignore-vuln CVE-2024-23342 --ignore-vuln CVE-2026-33936
+      - powershell -Command "Write-Host '✅ Python dependencies fixed.' -ForegroundColor Green"
+
+  # -------------------------
+  # DOCKER
   # -------------------------
   up:
     desc: docker-compose up -d => task up
@@ -116,7 +138,7 @@ tasks:
       - powershell -Command "Write-Host '🐳 Raising docker ...' -ForegroundColor Green"
       - docker-compose up -d
       - powershell -Command "Write-Host '✅ Docker compose up.' -ForegroundColor Green"
-  
+
   down:
     desc: docker-compose down -v => task up
     cmds:

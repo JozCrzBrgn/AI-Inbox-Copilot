@@ -10,7 +10,7 @@
 ![Bandit](https://img.shields.io/badge/Bandit-0%20issues-brightgreen)
 ![Dependabot](https://img.shields.io/badge/Dependabot-active-025E8C?logo=dependabot)
 
-> Full-stack AI platform that analyzes customer support emails in real-time — extracting intent, priority, sentiment, and generating ready-to-send replies — shielded by a multi-layered LLM security pipeline, production-grade CI/CD, and 96% test coverage.
+> Full-stack AI platform that analyzes customer support emails in real-time — extracting intent, priority, sentiment, and generating ready-to-send replies — shielded by a multi-layered LLM security pipeline, production-grade CI/CD, and 95% test coverage.
 
 Built to demonstrate end-to-end engineering ownership: secure LLM integration, prompt injection defense, JWT-authenticated REST API, containerized deployment, and automated DevOps workflows aligned with US/remote engineering standards.
 
@@ -19,7 +19,7 @@ Built to demonstrate end-to-end engineering ownership: secure LLM integration, p
 ## Code Quality
 
 [![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=JozCrzBrgn_AI-Inbox-Copilot)](https://sonarcloud.io/summary/new_code?id=JozCrzBrgn_AI-Inbox-Copilot)
-![Coverage](https://img.shields.io/badge/Coverage-96%25-brightgreen)
+![Coverage](https://img.shields.io/badge/Coverage-95%25-brightgreen)
 ![Security](https://img.shields.io/badge/Bandit-0%20issues-brightgreen)
 
 ---
@@ -69,26 +69,24 @@ The system comprises three independently containerized components:
               └─────────────┬─────────────┘
                             │ REST :8000
 ┌───────────────────────────▼─────────────────────────────┐
-│                    FastAPI Backend                       │
-│                                                         │
-│  POST /token     POST /v1/analyze    GET /v1/emails     │
-│                                                         │
-│        JWT Auth · Rate Limiter · CORS Middleware        │
+│                    FastAPI Backend                      │
+│ JWT Auth · CORS · Rate Limiter                          │
 └──────────────┬──────────────────────────┬───────────────┘
                │                          │
    ┌───────────▼──────────┐  ┌────────────▼────────────┐
    │  AI Security Layer   │  │     PostgreSQL 16       │
-   │ sanitize_and_validate│  │   emails history table  │
    └───────────┬──────────┘  └─────────────────────────┘
                │
    ┌───────────▼──────────┐
+   │     Redis Layer      │──────▶ Token budgets & cache
+   └───────────┬──────────┘
+               │
+   ┌───────────▼──────────┐
    │   OpenAI GPT API     │
-   │  (few-shot prompts)  │
    └───────────┬──────────┘
                │
    ┌───────────▼──────────┐
    │    Slack Webhook     │
-   │  (high priority only)│
    └──────────────────────┘
 ```
 
@@ -106,6 +104,7 @@ The system comprises three independently containerized components:
 | Frontend | Flet (Python SPA, web renderer) |
 | AI / LLM | OpenAI API — `gpt-4o`, `gpt-4-turbo`, `gpt-4`, `gpt-3.5-turbo` |
 | Database | PostgreSQL 16, psycopg2 (parameterized queries only) |
+| Cache    | Redis 7.4 |
 | Auth | JWT (python-jose), Argon2 + PBKDF2 (passlib) |
 | Config | pydantic-settings (typed settings, startup validation) |
 | Notifications | Slack Incoming Webhooks |
@@ -117,7 +116,7 @@ The system comprises three independently containerized components:
 | Docker + Docker Compose | Multi-stage builds, non-root containers, health checks |
 | GitHub Actions | CI pipeline (lint → test → SonarCloud) + Security pipeline (Trivy → Bandit) |
 | Ruff | Linting and import ordering enforcement |
-| pytest + coverage.py | 163-test suite with ≥ 90% coverage gate (currently 100%) |
+| pytest + coverage | 170-test suite with ≥ 90% coverage gate (currently 100%) |
 | SonarCloud | Cloud-based static analysis and blocking quality gate on `main` |
 | Trivy | Container and filesystem CVE scanning (CRITICAL/HIGH severity) |
 | Bandit | Python SAST — static security analysis |
@@ -173,7 +172,7 @@ PR / push to main
       ├── [1] lint ──── Ruff (style + import order)
       │
       ├── [2] test ──── pytest + live PostgreSQL 16 service container
-      │               coverage ≥ 90% enforced (currently 100%)
+      │               coverage ≥ 90% enforced (currently 95%)
       │               coverage.xml uploaded as artifact
       │
       └── [3] sonar ─── SonarCloud quality gate (main only)
@@ -213,7 +212,7 @@ Auto-opens grouped PRs monthly for `pip`, `docker`, and `github-actions`. Major 
 
 ## Testing
 
-163 tests with **100% pass rate** and coverage enforced at ≥ 90% in CI.
+170 tests with **100% pass rate** and coverage enforced at ≥ 90% in CI.
 
 ### Strategy
 
@@ -326,9 +325,9 @@ curl -X POST http://localhost:8000/v1/analyze \
 | **LLM Security** | Regex heuristics + semantic LLM classifier + JSON poison detection — defense-in-depth for adversarial inputs |
 | **API Design** | Versioned RESTful endpoints, JWT auth, configurable rate limiting, health checks, Pydantic validation |
 | **Security Depth** | Argon2 hashing, parameterized SQL, non-root Docker, Trivy + Bandit = 0 findings |
-| **DevOps Maturity** | Full CI/CD pipeline (lint → test → quality gate → security scan), 100% coverage enforced, Dependabot |
+| **DevOps Maturity** | Full CI/CD pipeline (lint → test → quality gate → security scan), 95% coverage enforced, Dependabot |
 | **Production Thinking** | Startup config validation via pydantic-settings, multi-stage Docker builds, externalized prompts, structured logging |
-| **Test Discipline** | 163 isolated tests, full OpenAI/DB mocking, centralized fixtures — fast and cost-free CI runs |
+| **Test Discipline** | 170 isolated tests, full OpenAI/DB mocking, centralized fixtures — fast and cost-free CI runs |
 
 ---
 
@@ -345,13 +344,10 @@ curl -X POST http://localhost:8000/v1/analyze \
 
 ## Author
 
-**Josué Cruz** — Backend & AI Engineer
-
-Python · FastAPI · LLMs · PostgreSQL · Docker · CI/CD
+**Josue Cruz** — Backend & AI Engineer
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-josuecruzbarragan-0077B5?logo=linkedin)](https://www.linkedin.com/in/josuecruzbarragan/)
 [![GitHub](https://img.shields.io/badge/GitHub-JozCrzBrgn-181717?logo=github)](https://github.com/JozCrzBrgn)
 
----
-
+*Building resilient, modern, and highly-scalable architectural solutions heavily fortified by advanced AI security pipelines.*  
 *Licensed under the [MIT License](LICENSE).*

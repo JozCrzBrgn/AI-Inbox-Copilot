@@ -7,9 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-
   # -------------------------
-  # 1️⃣ LINT 
+  # 1️⃣ LINT
   # -------------------------
   lint:
     runs-on: ubuntu-latest
@@ -85,11 +84,11 @@ jobs:
 
       - name: Validate environment variables
         run: |
-            python - <<EOF
-            from backend.core.config import get_settings
-            get_settings()
-            print("Environment variables validated successfully.")
-            EOF
+          python - <<EOF
+          from backend.core.config import get_settings
+          get_settings()
+          print("Environment variables validated successfully.")
+          EOF
 
       - name: Run tests
         run: |
@@ -105,7 +104,7 @@ jobs:
           path: coverage.xml
 
   # -------------------------
-  # 3️⃣ SONAR 
+  # 3️⃣ SONAR
   # -------------------------
   sonar:
     runs-on: ubuntu-latest

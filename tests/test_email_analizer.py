@@ -62,7 +62,7 @@ def test_analyze_email_successful_response(
 
     mock_openai.return_value = mock_resp
 
-    result = analyze_email("Help me")
+    result = analyze_email("Help me", "John")
 
     assert result["intent"] == "support_request"
 
@@ -117,7 +117,7 @@ def test_json_with_markdown(
 
     mock_openai.return_value = mock_resp
 
-    result = analyze_email("Bad service")
+    result = analyze_email("Bad service", "Ana")
 
     assert result["customer_name"] == "Ana"
     assert result["intent"] == "complaint"
@@ -168,7 +168,7 @@ def test_malformed_json_extraction(
 
     mock_openai.return_value = mock_resp
 
-    result = analyze_email("Help")
+    result = analyze_email("Help", "Luis")
 
     assert result["customer_name"] == "Luis"
     assert result["intent"] == "support_request"
@@ -223,7 +223,7 @@ def test_invalid_values_normalization(
 
     mock_openai.return_value = mock_resp
 
-    result = analyze_email("Info")
+    result = analyze_email("Info", "Maria")
 
     assert result["priority"] == "medium"
     assert result["sentiment"] == "neutral"
@@ -262,7 +262,7 @@ def test_openai_exception_returns_default(
     mock_openai.side_effect = Exception("API failure")
 
     with pytest.raises(HTTPException) as exc_info:
-        analyze_email("Anything")
+        analyze_email("Anything", "Juan")
 
     assert exc_info.value.status_code == 500
     assert exc_info.value.detail == "AI processing failed"
@@ -309,7 +309,7 @@ def test_missing_fields_are_filled(
 
     mock_openai.return_value = mock_resp
 
-    result = analyze_email("Help")
+    result = analyze_email("Help", "Juan")
 
     assert result["customer_name"] == "Unknown"
     assert result["intent"] == "support_request"
@@ -354,7 +354,7 @@ def test_invalid_json_returns_default(
 
     mock_openai.return_value = mock_resp
 
-    result = analyze_email("Hello")
+    result = analyze_email("Hello", "Juan")
 
     assert result["intent"] == "unknown"
 
@@ -404,7 +404,7 @@ def test_markdown_without_json_keyword(
 
     mock_openai.return_value = mock_resp
 
-    result = analyze_email("Help")
+    result = analyze_email("Help", "Pedro")
 
     assert result["customer_name"] == "Pedro"
 
@@ -454,13 +454,13 @@ def test_json_with_noise_around(
 
     mock_openai.return_value = mock_resp
 
-    result = analyze_email("Help")
+    result = analyze_email("Help", "Luis")
 
     assert result["customer_name"] == "Luis"
 
 
 def test_empty_input_returns_security_violation():
-    result = analyze_email("")
+    result = analyze_email("", "Juan")
 
     assert result["intent"] == "security_violation"
     assert "Empty or invalid input" in result["summary"]
@@ -474,7 +474,7 @@ def test_sanitize_blocks_input(mock_sanitize):
         "injection_report": {"confidence": 0.9, "detected_patterns": ["hack"]},
     }
 
-    result = analyze_email("malicious")
+    result = analyze_email("malicious", "Juan")
 
     assert result["intent"] == "security_violation"
     assert "Prompt injection detected" in result["summary"]
@@ -488,7 +488,7 @@ def test_empty_after_sanitize(mock_sanitize):
         "injection_report": {"confidence": 0, "detected_patterns": []},
     }
 
-    result = analyze_email("something")
+    result = analyze_email("something", "Juan")
 
     assert result["intent"] == "security_violation"
     assert "Invalid content after sanitization" in result["summary"]
@@ -504,7 +504,7 @@ def test_not_support_email(mock_is_support, mock_sanitize):
     }
     mock_is_support.return_value = False
 
-    result = analyze_email("random")
+    result = analyze_email("random", "Juan")
 
     assert result["intent"] == "security_violation"
     assert "INVALID_INPUT" in result["summary"]
@@ -522,7 +522,7 @@ def test_non_support_classification(mock_classify, mock_is_support, mock_sanitiz
     mock_is_support.return_value = True
     mock_classify.return_value = {"category": "MARKETING"}
 
-    result = analyze_email("promo")
+    result = analyze_email("promo", "Juan")
 
     assert result["intent"] == "non_support_marketing"
 
@@ -547,7 +547,7 @@ def test_llm_detects_injection(
         "reason": "prompt injection",
     }
 
-    result = analyze_email("help")
+    result = analyze_email("help", "Juan")
 
     assert result["intent"] == "security_violation"
     assert "Semantic injection detected" in result["summary"]
@@ -590,7 +590,7 @@ def test_use_examples_true(
     mock_resp.choices[0].message.content = json.dumps({"intent": "support"})
     mock_openai.return_value = mock_resp
 
-    analyze_email("help", use_examples=True)
+    analyze_email("help", "Juan", use_examples=True)
 
     mock_prompt.get_analysis_prompt.assert_called_with(
         "help", include_examples=True, max_examples=2

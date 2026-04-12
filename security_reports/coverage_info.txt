@@ -4,14 +4,15 @@ backend\__init__.py                          0      0   100%
 backend\core\__init__.py                     0      0   100%
 backend\core\ai_agent.py                    40      1    98%
 backend\core\api_info.py                    11      0   100%
-backend\core\config.py                      18      0   100%
+backend\core\config.py                      20      0   100%
 backend\core\cors.py                        28      0   100%
 backend\core\database.py                    14      1    93%
+backend\core\redis_cache.py                 18      0   100%
 backend\core\security.py                    20      0   100%
 backend\core\slack.py                        4      0   100%
 backend\main.py                             26      0   100%
 backend\middleware\__init__.py               0      0   100%
-backend\middleware\rate_limiter.py           2      0   100%
+backend\middleware\rate_limiter.py           8      1    88%
 backend\routers\__init__.py                  0      0   100%
 backend\routers\auth.py                     13      0   100%
 backend\routers\email_analizer.py           23      6    74%
@@ -25,8 +26,9 @@ backend\schemas\info.py                      5      0   100%
 backend\services\__init__.py                 0      0   100%
 backend\services\database.py                34      0   100%
 backend\services\dependencies.py             5      0   100%
-backend\services\email_analizer.py         106      5    95%
+backend\services\email_analizer.py         113      9    92%
 backend\services\prompt_security.py        105      3    97%
+backend\services\redis_client.py            24     12    50%
 backend\services\security.py                37      1    97%
 backend\services\slack.py                   18      0   100%
 frontend\__init__.py                         0      0   100%
@@ -44,4 +46,4 @@ frontend\views\login_view.py                31      0   100%
 frontend\views\main_view.py                 59      0   100%
 prompts\__init__.py                         54      2    96%
 ------------------------------------------------------------
-TOTAL                                      911     35    96%
+TOTAL                                      968     52    95%

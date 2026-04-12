@@ -64,7 +64,9 @@ async def analyze_email_endpoint(
     """
 
     # Analyze email with OpenAI
-    result = analyze_email(email_content=payload.email_content, use_examples=True)
+    result = analyze_email(
+        email_content=payload.email_content, username=username, use_examples=True
+    )
 
     # Save in PostgreSQL
     save_email(

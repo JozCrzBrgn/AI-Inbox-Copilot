@@ -1,6 +1,7 @@
 import importlib
 import os
 import sys
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -49,6 +50,9 @@ def mock_openai_error(monkeypatch):
 @pytest.fixture
 def mock_settings(monkeypatch):
     class MockAI:
+        openai_model = "fake-model"
+        openai_temperature = 0.0
+        openai_max_tokens = 50
         openai_api_key = "fake-key"
         openai_cheap_model = "fake-model"
         openai_cheap_temperature = 0.0
@@ -89,3 +93,21 @@ def app_client(mock_settings, mock_db):
     importlib.reload(backend.main)
 
     return TestClient(backend.main.app)
+
+
+@pytest.fixture(autouse=True)
+def mock_redis_layer():
+    with (
+        patch("backend.services.email_analizer._cache_get") as mock_get,
+        patch("backend.services.email_analizer._cache_set") as mock_set,
+        patch("backend.services.email_analizer._check_token_budget") as mock_budget,
+        patch("backend.services.email_analizer._estimate_tokens") as mock_tokens,
+        patch("backend.services.email_analizer._hash") as mock_hash,
+    ):
+        mock_get.return_value = None
+        mock_set.return_value = None
+        mock_budget.return_value = None
+        mock_tokens.return_value = 10
+        mock_hash.return_value = "fakehash"
+
+        yield
